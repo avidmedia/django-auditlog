@@ -69,8 +69,14 @@ class AuditlogMiddleware(MiddlewareMixin):
         Signal receiver with an extra, required 'user' kwarg. This method becomes a real (valid) signal receiver when
         it is curried with the actor.
         """
-        if signal_duid != threadlocal.auditlog['signal_duid']:
+        # This is a workaround for Factories, as their process
+        # doesn't always use the same thread to create models
+        try:
+            if signal_duid != threadlocal.auditlog['signal_duid']:
+                return
+        except AttributeError:
             return
+
         try:
             app_label, model_name = settings.AUTH_USER_MODEL.split('.')
             auth_user_model = apps.get_model(app_label, model_name)
